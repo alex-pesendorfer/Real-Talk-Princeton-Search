@@ -1,6 +1,7 @@
 # from dotenv import load_dotenv
 from flask import Flask
 from flask import render_template
+from flask import make_response
 from flask import request
 from flask import url_for
 import json
@@ -8,7 +9,10 @@ import os
 import pandas as pd
 import pinecone
 import requests
-# from sentence_transformers import SentenceTransformer
+import pandas as pd
+import numpy as np
+
+from openai.embeddings_utils import get_embedding, cosine_similarity
 
 app = Flask(__name__)
 
@@ -16,6 +20,31 @@ app = Flask(__name__)
 # DATA_DIR = "tmp"
 # DATA_FILE = f"{DATA_DIR}/quora_duplicate_questions.tsv"
 # DATA_URL = "https://qim.fs.quoracdn.net/quora_duplicate_questions.tsv"
+
+# test with amazone fine-food data
+datafile_path = "amazon-fine-food-reviews/fine_food_reviews_with_embeddings_100.csv"
+df = pd.read_csv(datafile_path)
+df["embedding"] = df.embedding.apply(eval).apply(np.array)
+
+# search through the reviews for a specific product
+def search_reviews(df, product_description, n=3, pprint=True):
+    product_embedding = get_embedding(
+        product_description,
+        engine="text-embedding-ada-002"
+    )
+    df["similarity"] = df.embedding.apply(lambda x: cosine_similarity(x, product_embedding))
+
+    results = (
+        df.sort_values("similarity", ascending=False)
+        .head(n)
+        .combined.str.replace("Title: ", "")
+        .str.replace("; Content:", ": ")
+    )
+    if pprint:
+        for r in results:
+            print(r[:200])
+            print()
+    return results
 
 # def initialize_pinecone():
 #     load_dotenv()
@@ -81,9 +110,24 @@ app = Flask(__name__)
 # df = read_tsv_file()
 # model = create_and_apply_model()
 
-@app.route("/")
+@app.route("/", methods=["GET"])
+@app.route('/index', methods=['GET'])
 def index():
-    return render_template("index.html")
+    query_data = ""
+    if request.method == "GET":
+        query_data = request.args.get('search')
+        if query_data is None or query_data.strip() == "":
+            results = ""
+        else:
+            # print("query_data", query_data)
+            results = search_reviews(df, query_data, n=1, pprint=False)
+            # print(len(results))
+            for item in results:
+                results = item
+        html = render_template("index.html", results = results)
+        response = make_response(html)
+        return response
+    
 
 # @app.route("/api/search", methods=["POST", "GET"])
 # def search():
