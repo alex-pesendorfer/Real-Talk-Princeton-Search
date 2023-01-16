@@ -1,40 +1,90 @@
+import csv
+import html
+import os
 import pytumblr
-client = pytumblr.TumblrRestClient(
-    'BdQxCsKzTTa6TJUBA5aRgQen9bFzvIOxZhrJ0POYK7aVJGUJV0',
-    'zLkfS4zvvVbRkTxpJxzRrJ9Iqxnp6XjOmqwIwpIVZDy8whYw44',
-    'vIU3PspwwnEgbZHYxoaBqn4ZkIWbMKAubuGQ3oZe6mkd6MCSsH',
-    'zLkfS4zvvVbRkTxpJxzRrJ9Iqxnp6XjOmqwIwpIVZDy8whYw44',
-)
 
-response = client.posts('realtalk-princeton.tumblr.com')
-posts = response['posts']
+from io import StringIO
+from html.parser import HTMLParser
 
-for post in posts:
-    print(post)
+class MLStripper(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.reset()
+        self.strict = False
+        self.convert_charrefs= True
+        self.text = StringIO()
+    def handle_data(self, d):
+        self.text.write(d)
+    def get_data(self):
+        return self.text.getvalue()
 
-# def get_all_posts(client, blog):
-#     offset = 0
-#     while True:
-#         response = client.posts(blog, limit=20, offset=offset, reblog_info=True, notes_info=True)
+def strip_tags(html):
+    s = MLStripper()
+    s.feed(html)
+    return s.get_data()
 
-#         # Get the 'posts' field of the response        
-#         posts = response['posts']
+# def html_to_plaintext(html):
+#     plaintext = html.replace("<p>", "")
+#     plaintext = html.replace("<\p>", "")
+#     return plaintext
 
-#         if not posts: return
+# response = client.posts('realtalk-princeton.tumblr.com')
+# posts = response['posts']
 
-#         for post in posts:
-#             yield post
+# retrieve 20 posts for testing
+# for post in posts:
+#     print("q", strip_tags(post["question"]))
+#     print("a", strip_tags(post["answer"]))
 
-#         # move to the next offset
-#         offset += 20
+def get_posts(client, blog, max_posts=100):
+    offset = 0
+    while offset < max_posts:
+        response = client.posts(blog, limit=20, offset=offset, reblog_info=True, notes_info=True)
+
+        # Get the 'posts' field of the response        
+        posts = response['posts']
+
+        if not posts: return
+
+        for post in posts:
+            yield post
+
+        # move to the next offset
+        offset += 20
 
 
 # client = pytumblr.TumblrRestClient('secrety-secret')
 # blog = 'staff'
 
-# # use our function
+TUMBLR_CONSUMER_KEY = os.environ.get('TUMBLR_CONSUMER_KEY')
+TUMBLR_CONSUMER_SECRET = os.environ.get('TUMBLR_CONSUMER_SECRET')
+TUMBLR_TOKEN = os.environ.get('TUMBLR_TOKEN')
+TUMBLR_TOKEN_SECRET = os.environ.get('TUMBLR_TOKEN_SECRET')
+
+client = pytumblr.TumblrRestClient(
+    TUMBLR_CONSUMER_KEY,
+    TUMBLR_CONSUMER_SECRET,
+    TUMBLR_TOKEN,
+    TUMBLR_TOKEN_SECRET,
+)
+blog = "realtalk-princeton"
+
+# use our function
 # with open('{}-posts.txt'.format(blog), 'w') as out_file:
 #     for post in get_all_posts(client, blog):
 #         print >>out_file, post
 #         # if you're in python 3.x, use the following
 #         # print(post, file=out_file)
+
+
+with open('real-talk-princeton_100.csv', 'w', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerow(['', 'Question', 'Answer'])
+    count = 0
+    for post in get_posts(client, blog, 100):
+        question = strip_tags(html.unescape(post["question"]))
+        print("q", question)
+        answer = strip_tags(html.unescape(post["answer"]))
+        print("a", answer)
+        writer.writerow([count, question, answer])
+        count += 1
