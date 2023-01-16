@@ -120,10 +120,16 @@ def index():
             results = ""
         else:
             # print("query_data", query_data)
-            results = search_reviews(df, query_data, n=1, pprint=False)
+            results = search_reviews(df, query_data, n=5, pprint=False)
             # print(len(results))
+            # for item in results:
+            #     print(item)
+            #     results = item
+            output = []
             for item in results:
-                results = item
+                output.append(item)
+            print(output)
+            results = output
         html = render_template("index.html", results = results)
         response = make_response(html)
         return response
