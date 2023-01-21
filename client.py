@@ -36,8 +36,7 @@ def strip_tags(html):
 #     print("q", strip_tags(post["question"]))
 #     print("a", strip_tags(post["answer"]))
 
-def get_posts(client, blog, max_posts=100):
-    offset = 0
+def get_posts(client, blog, offset=0, max_posts=100):
     while offset < max_posts:
         response = client.posts(blog, limit=20, offset=offset, reblog_info=True, notes_info=True)
 
@@ -77,14 +76,24 @@ blog = "realtalk-princeton"
 #         # print(post, file=out_file)
 
 
-with open('real-talk-princeton_100.csv', 'w', newline='') as file:
+with open('real-talk-princeton_19439_20000.csv', 'w', newline='') as file:
     writer = csv.writer(file)
-    writer.writerow(['', 'Question', 'Answer'])
+    writer.writerow(['Time', 'Question', 'Answer'])
     count = 0
-    for post in get_posts(client, blog, 100):
-        question = strip_tags(html.unescape(post["question"]))
-        print("q", question)
-        answer = strip_tags(html.unescape(post["answer"]))
-        print("a", answer)
+    for post in get_posts(client, blog, 19439, 20000):
+        print(count)
+        print(post)
+        if "question" in post:
+            question = strip_tags(html.unescape(post["question"]))
+            # print("q", question)
+            answer = strip_tags(html.unescape(post["answer"]))
+            # print("a", answer) 
+        elif "body" in post:
+            question = ""
+            answer = strip_tags(html.unescape(post["body"]))
+        elif "url" in post and "description" in post:
+            question = strip_tags(html.unescape(post["description"]))
+            answer = strip_tags(html.unescape(post["url"]))
+
         writer.writerow([count, question, answer])
         count += 1

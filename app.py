@@ -22,7 +22,8 @@ app = Flask(__name__)
 # DATA_URL = "https://qim.fs.quoracdn.net/quora_duplicate_questions.tsv"
 
 # test with amazone fine-food data
-datafile_path = "amazon-fine-food-reviews/fine_food_reviews_with_embeddings_100.csv"
+# datafile_path = "amazon-fine-food-reviews/fine_food_reviews_with_embeddings_100.csv"
+datafile_path = "real-talk-princeton_with_embeddings_10000.csv"
 df = pd.read_csv(datafile_path)
 df["embedding"] = df.embedding.apply(eval).apply(np.array)
 
