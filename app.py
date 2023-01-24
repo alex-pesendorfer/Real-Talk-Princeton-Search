@@ -47,10 +47,31 @@ def search_reviews(df, product_description, n=3, pprint=True):
             print()
     return results
 
-# def initialize_pinecone():
-#     load_dotenv()
-#     PINECONE_API_KEY = os.environ["PINECONE_API_KEY"]
-#     pinecone.init(api_key=PINECONE_API_KEY)
+
+def initialize_pinecone():
+    PINECONE_API_KEY = os.environ["PINECONE_API_KEY"]
+    pinecone.init(api_key=PINECONE_API_KEY)
+    index = pinecone.Index('rtp-index')
+
+    return index
+    # print(pinecone.describe_index('rtp-index'))
+
+def get_results(index, query, n=5):
+    
+    res = get_embedding(
+        query,
+        engine="text-embedding-ada-002"
+    )   
+
+    results = index.query(
+        vector=res,
+        top_k=n,
+        include_values=False,
+        include_metadata=True,
+    )
+
+    return results
+
 
 # def delete_existing_pinecone_index():
 #     if pinecone_index_name in pinecone.list_indexes():
@@ -110,30 +131,50 @@ def search_reviews(df, product_description, n=3, pprint=True):
 # download_data()
 # df = read_tsv_file()
 # model = create_and_apply_model()
-
 @app.route("/", methods=["GET"])
 @app.route('/index', methods=['GET'])
 def index():
+
+    index = initialize_pinecone()
+
     query_data = ""
     if request.method == "GET":
         query_data = request.args.get('search')
         if query_data is None or query_data.strip() == "":
             results = ""
         else:
-            # print("query_data", query_data)
-            results = search_reviews(df, query_data, n=5, pprint=False)
-            # print(len(results))
-            # for item in results:
-            #     print(item)
-            #     results = item
-            output = []
-            for item in results:
-                output.append(item)
-            print(output)
-            results = output
-        html = render_template("index.html", results = results)
+            results = get_results(index, query_data)
+            print(results)
+        
+        html = render_template("pinecone_index.html", results = results)
         response = make_response(html)
         return response
+
+
+# @app.route("/", methods=["GET"])
+# @app.route('/index', methods=['GET'])
+# def index():
+
+#     query_data = ""
+#     if request.method == "GET":
+#         query_data = request.args.get('search')
+#         if query_data is None or query_data.strip() == "":
+#             results = ""
+#         else:
+#             # print("query_data", query_data)
+#             results = search_reviews(df, query_data, n=5, pprint=False)
+#             # print(len(results))
+#             # for item in results:
+#             #     print(item)
+#             #     results = item
+#             output = []
+#             for item in results:
+#                 output.append(item)
+#             print(output)
+#             results = output
+#         html = render_template("index.html", results = results)
+#         response = make_response(html)
+#         return response
     
 
 # @app.route("/api/search", methods=["POST", "GET"])

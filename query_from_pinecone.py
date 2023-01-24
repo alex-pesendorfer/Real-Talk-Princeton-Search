@@ -19,15 +19,15 @@ from openai.embeddings_utils import get_embedding, cosine_similarity
 MODEL = "text-embedding-ada-002"
 
 res = get_embedding(
-    "Is mental health good at Princeton?",
+    "Most popular professors public policy",
     engine="text-embedding-ada-002"
 )
 
-# print(len(res))
+print(len(res))
 
-# print(pinecone.list_indexes())
+pinecone.init(api_key=os.environ.get("PINECONE_API_KEY"), environment="us-west1-gcp")
 
-index = pinecone.Index("rtp-index")
+index = pinecone.Index('rtp-index')
 
 test = index.query(
   vector=res,
@@ -35,4 +35,4 @@ test = index.query(
   include_values=False,
   include_metadata=True,
 )
-print(test)
+print(test['matches'][0])
