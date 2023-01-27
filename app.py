@@ -72,65 +72,6 @@ def get_results(index, query, n=5):
 
     return results
 
-
-# def delete_existing_pinecone_index():
-#     if pinecone_index_name in pinecone.list_indexes():
-#         pinecone.delete_index(pinecone_index_name)
-
-# def create_pinecone_index():
-#     pinecone.create_index(name=pinecone_index_name, metric="cosine", shards=1)
-#     pinecone_index = pinecone.Index(name=pinecone_index_name)
-
-#     return pinecone_index
-
-# def download_data():
-#     os.makedirs(DATA_DIR, exist_ok=True)
-
-#     if not os.path.exists(DATA_FILE):
-#         r = requests.get(DATA_URL)
-#         with open(DATA_FILE, "wb") as f:
-#             f.write(r.content)
-
-# def read_tsv_file():
-#     df = pd.read_csv(
-#         f"{DATA_FILE}", sep="\t", usecols=["qid1", "question1"], index_col=False
-#     )
-#     df = df.sample(frac=1).reset_index(drop=True)
-#     df.drop_duplicates(inplace=True)
-
-#     return df
-
-# def create_and_apply_model():
-#     model = SentenceTransformer("average_word_embeddings_glove.6B.300d")
-#     df["question_vector"] = df.question1.apply(lambda x: model.encode(str(x)))
-#     pinecone_index.upsert(items=zip(df.qid1, df.question_vector))
-
-#     return model
-
-# def query_pinecone(search_term):
-#     query_question = str(search_term)
-#     query_vectors = [model.encode(query_question)]
-
-#     query_results = pinecone_index.query(queries=query_vectors, top_k=5)
-#     res = query_results[0]
-
-#     results_list = []
-
-#     for idx, _id in enumerate(res.ids):
-#         results_list.append({
-#             "id": _id,
-#             "question": df[df.qid1 == int(_id)].question1.values[0],
-#             "score": res.scores[idx],
-#         })
-
-#     return json.dumps(results_list)
-
-# initialize_pinecone()
-# delete_existing_pinecone_index()
-# pinecone_index = create_pinecone_index()
-# download_data()
-# df = read_tsv_file()
-# model = create_and_apply_model()
 @app.route("/", methods=["GET"])
 @app.route('/index', methods=['GET'])
 def index():
