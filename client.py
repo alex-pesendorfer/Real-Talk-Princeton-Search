@@ -37,8 +37,7 @@ def strip_tags(html):
 #     print("a", strip_tags(post["answer"]))
 
 def get_posts(client, blog, offset=0, max_posts=100):
-    initial_offset = offset
-    max_posts = max_posts + initial_offset
+
     while offset < max_posts:
         response = client.posts(blog, limit=20, offset=offset, reblog_info=True, notes_info=True)
 
@@ -71,12 +70,14 @@ client = pytumblr.TumblrRestClient(
 blog = "realtalk-princeton"
 
 
+
+
 # Writes returned posts from get_posts to csv
-with open('real-talk-princeton_last80_id_date_url.csv', 'w', newline='') as file:
+with open('real-talk-princeton_16400_19439_id_date_url.csv', 'w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow(['count', 'id', 'timestamp', 'post_url'])
-    count = 0
-    for post in get_posts(client, blog, offset=9919, max_posts=150):
+    count = 16400
+    for post in get_posts(client, blog, offset=10000+56+6486, max_posts=19439):
         print(count)
         # print(post)
         id = post["id"]
