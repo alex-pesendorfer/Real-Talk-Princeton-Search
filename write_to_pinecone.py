@@ -33,44 +33,54 @@ index = pinecone.Index("rtp-index")
 
 
 # Update metadata
-datafile_path = "real-talk-princeton_10000_19439_id_date_url.csv"
-df = pd.read_csv(datafile_path)
-df["id"] = df.id
-df["id"] = df["id"].astype('string')
-df["timestamp"] = df.timestamp
-df["timestamp"] = df["timestamp"].astype('string')
-df["post_url"] = df.post_url
+# datafile_path = "real-talk-princeton_10000_19439_id_date_url.csv"
+# df = pd.read_csv(datafile_path)
+
 
 # for i in range(len(df["id"])):
-name = "vec_" + str(10000)
-index.update(name, set_metadata={"id" : df["id"][0], "timestamp" : df["timestamp"][0], "post_url" : df["post_url"][0]})
+# name = "vec_" + str(10000)
+# index.update(name, set_metadata={"id" : df["id"][0], "timestamp" : df["timestamp"][0], "post_url" : df["post_url"][0]})
 
 
 
 # index.upsert([('vec_0', res, {"question":"q", "answer":"a"})])
 
-# datafile_path = "real-talk-princeton_with_embeddings_10000.csv"
-# df = pd.read_csv(datafile_path)
-# df["embedding"] = df.embedding.apply(eval).apply(np.array)
-# df["combined"] = df.combined
-# df["Question"] = df.Question
-# df["Answer"] = df.Answer
+datafile_path = "rtp_0_10000_embedded.csv"
+df = pd.read_csv(datafile_path)
+df["embedding"] = df.embedding.apply(eval).apply(np.array)
+df["combined"] = df.combined
+df["Question"] = df.Question
+df["Answer"] = df.Answer
+df["id"] = df.id.astype(str)
+df["timestamp"] = df.timestamp.astype(str)
+df["post_url"] = df.post_url
 
-# # print(df["combined"][0])
-# # print(df["embedding"][0])
+print(df["combined"][9700])
+print(df["embedding"][9700])
+print(df["Question"][9700])
+print(df["Answer"][9700])
+print(df["id"][9700])
+print(df["timestamp"][9700])
+print(df["post_url"][9700])
 
-# vecs = []
-# count = 0
-# for i in range(len(df["embedding"])):
-#     if count == 100:
-#         index.upsert(vecs)
-#         vecs = []
-#         count = 0
+print(len(df["embedding"]))
+print(len(df["id"]))
 
-#     name = "vec_" + str(i)
-#     vecs.append((name, list(df["embedding"][i]), {"Question":df["Question"][i], "Answer":df["Answer"][i]}))
-#     # vecs.append((name, list(df["embedding"][i]), {"combined":df["combined"][i], "Question":df["Question"][i], "Answer":df["Answer"][i]}))
-#     count += 1
+
+vecs = []
+count = 0
+for i in range(len(df["embedding"])):
+    if count == 100:
+        index.upsert(vecs)
+        vecs = []
+        count = 0
+
+    name = "vec_" + str(i)
+    vecs.append((name, list(df["embedding"][i]), {"Question":df["Question"][i], "Answer":df["Answer"][i],
+                                                  "id" : df["id"][i], "timestamp" : df["timestamp"][i],
+                                                  "post_url" : df["post_url"][i]}))
+    # vecs.append((name, list(df["embedding"][i]), {"combined":df["combined"][i], "Question":df["Question"][i], "Answer":df["Answer"][i]}))
+    count += 1
 
 
 

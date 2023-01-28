@@ -5,3 +5,5 @@ real-talk-princeton_with_embeddings_10000.csv
 venv
 .ipynb_checkpoints
 __pycache__
+data
+*.csv
