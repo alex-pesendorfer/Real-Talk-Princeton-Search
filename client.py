@@ -37,6 +37,8 @@ def strip_tags(html):
 #     print("a", strip_tags(post["answer"]))
 
 def get_posts(client, blog, offset=0, max_posts=100):
+    initial_offset = offset
+    max_posts = max_posts + initial_offset
     while offset < max_posts:
         response = client.posts(blog, limit=20, offset=offset, reblog_info=True, notes_info=True)
 
@@ -68,32 +70,42 @@ client = pytumblr.TumblrRestClient(
 )
 blog = "realtalk-princeton"
 
-# use our function
-# with open('{}-posts.txt'.format(blog), 'w') as out_file:
-#     for post in get_all_posts(client, blog):
-#         print >>out_file, post
-#         # if you're in python 3.x, use the following
-#         # print(post, file=out_file)
 
-
-with open('real-talk-princeton_19439_20000.csv', 'w', newline='') as file:
+# Writes returned posts from get_posts to csv
+with open('real-talk-princeton_last80_id_date_url.csv', 'w', newline='') as file:
     writer = csv.writer(file)
-    writer.writerow(['Time', 'Question', 'Answer'])
+    writer.writerow(['count', 'id', 'timestamp', 'post_url'])
     count = 0
-    for post in get_posts(client, blog, 19439, 20000):
+    for post in get_posts(client, blog, offset=9919, max_posts=150):
         print(count)
-        print(post)
-        if "question" in post:
-            question = strip_tags(html.unescape(post["question"]))
-            # print("q", question)
-            answer = strip_tags(html.unescape(post["answer"]))
-            # print("a", answer) 
-        elif "body" in post:
-            question = ""
-            answer = strip_tags(html.unescape(post["body"]))
-        elif "url" in post and "description" in post:
-            question = strip_tags(html.unescape(post["description"]))
-            answer = strip_tags(html.unescape(post["url"]))
+        # print(post)
+        id = post["id"]
+        timestamp = post["timestamp"]
+        post_url = strip_tags(html.unescape(post["post_url"]))
 
-        writer.writerow([count, question, answer])
+        writer.writerow([count, id, timestamp, post_url])
         count += 1
+
+
+# Writes returned posts from get_posts to csv
+# with open('real-talk-princeton_19439_20000.csv', 'w', newline='') as file:
+#     writer = csv.writer(file)
+#     writer.writerow(['Time', 'Question', 'Answer'])
+#     count = 0
+#     for post in get_posts(client, blog, 19439, 20000):
+#         print(count)
+#         print(post)
+#         if "question" in post:
+#             question = strip_tags(html.unescape(post["question"]))
+#             # print("q", question)
+#             answer = strip_tags(html.unescape(post["answer"]))
+#             # print("a", answer) 
+#         elif "body" in post:
+#             question = ""
+#             answer = strip_tags(html.unescape(post["body"]))
+#         elif "url" in post and "description" in post:
+#             question = strip_tags(html.unescape(post["description"]))
+#             answer = strip_tags(html.unescape(post["url"]))
+
+#         writer.writerow([count, question, answer])
+#         count += 1
