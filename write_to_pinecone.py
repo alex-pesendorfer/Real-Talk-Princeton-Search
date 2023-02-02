@@ -45,7 +45,7 @@ index = pinecone.Index("rtp-index")
 
 # index.upsert([('vec_0', res, {"question":"q", "answer":"a"})])
 
-datafile_path = "rtp_10000_embedded.csv"
+datafile_path = "rtp_0_10000_embedded.csv"
 df = pd.read_csv(datafile_path)
 df["embedding"] = df.embedding.apply(eval).apply(np.array)
 df["combined"] = df.combined
@@ -55,16 +55,16 @@ df["id"] = df.id.astype(str)
 df["timestamp"] = df.timestamp.astype(str)
 df["post_url"] = df.post_url
 
-print(df["combined"][9300])
-print(df["embedding"][9300])
-print(df["Question"][9300])
-print(df["Answer"][9300])
-print(df["id"][9300])
-print(df["timestamp"][9300])
-print(df["post_url"][9300])
+# print(df["combined"][9300])
+# print(df["embedding"][9300])
+# print(df["Question"][9300])
+# print(df["Answer"][9300])
+# print(df["id"][9300])
+# print(df["timestamp"][9300])
+# print(df["post_url"][9300])
 
-print(len(df["embedding"]))
-print(len(df["id"]))
+# print(len(df["embedding"]))
+# print(len(df["id"]))
 
 
 vecs = []
@@ -75,13 +75,21 @@ for i in range(len(df["embedding"])):
         vecs = []
         count = 0
 
-    name = "vec_" + str(9940 + i)
+    name = "vec_" + str(i)
     vecs.append((name, list(df["embedding"][i]), {"Question":df["Question"][i], "Answer":df["Answer"][i],
                                                   "id" : df["id"][i], "timestamp" : df["timestamp"][i],
                                                   "post_url" : df["post_url"][i]}))
+    # index.delete(ids=[name])
+    
     # vecs.append((name, list(df["embedding"][i]), {"combined":df["combined"][i], "Question":df["Question"][i], "Answer":df["Answer"][i]}))
     count += 1
 
+vecs = []
+name = "vec_" + str(len(df["embedding"]) - 1)
+vecs.append((name, list(df["embedding"][len(df["embedding"]) - 1]), {"Question":df["Question"][len(df["embedding"]) - 1], "Answer":df["Answer"][len(df["embedding"]) - 1],
+                                                  "id" : df["id"][len(df["embedding"]) - 1], "timestamp" : df["timestamp"][len(df["embedding"]) - 1],
+                                                  "post_url" : df["post_url"][len(df["embedding"]) - 1]}))
+index.upsert(vecs)
 
 
 # # test = index.query(
