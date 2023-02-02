@@ -53,11 +53,18 @@
         <hr>
         {% for match in results['matches']: %}
         <div class="card">
-            <div class="card-header">
-                Match Score: {{ "%.1f"|format(match['score'] * 100) }}%
+            <div class="card-header container-fluid">
+                <div class="row">
+                    <div class="col align-self-start">
+                        Match Score: {{ "%.1f"|format(match['score'] * 100) }}
+                    </div>
+                    <div class="col align-self-end">
+                        <div class="text-end"> {{ (match['metadata']['timestamp'] | ETDateTime) }} </div>
+                    </div>
+                </div>                
             </div>
             <div class="card-body">
-                <strong>Question: </strong> <br>
+                <strong> <a href= {{ match['metadata']['post_url'] }}> Question: </a> </strong> <br>
                 {{ match['metadata']['Question'] }} 
                 <br>
                 <br>

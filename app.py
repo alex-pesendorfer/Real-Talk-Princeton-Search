@@ -11,6 +11,7 @@ import pinecone
 import requests
 import pandas as pd
 import numpy as np
+import datetime
 
 from openai.embeddings_utils import get_embedding, cosine_similarity
 
@@ -71,6 +72,12 @@ def get_results(index, query, n=5):
     )
 
     return results
+
+@app.template_filter('ETDateTime')
+def ETDateTime(s):
+    x = datetime.datetime.fromtimestamp(int(s))
+    return x.strftime("%B") + ' ' + x.strftime("%d") + ', ' + x.strftime("%Y") + ' at ' + x.strftime("%I") + ':' + x.strftime("%M") + ' ' + x.strftime("%p")
+
 
 @app.route("/", methods=["GET"])
 @app.route('/index', methods=['GET'])
