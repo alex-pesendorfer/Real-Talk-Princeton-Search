@@ -11,9 +11,9 @@ embedding_encoding = "cl100k_base"  # this the encoding for text-embedding-ada-0
 max_tokens = 8000  # the maximum for text-embedding-ada-002 is 8191
 
 # load & inspect dataset
-input_datapath = "rtp_0_10000.csv"  # to save space, we provide a pre-filtered dataset
+input_datapath = "Combined_real-talk-princeton_10000_19439.csv"  # to save space, we provide a pre-filtered dataset
 df = pd.read_csv(input_datapath, index_col=0)
-df = df[["count", "id", "timestamp", "post_url", "Question", "Answer"]]
+df = df[["Question", "Answer", "id", "timestamp", "post_url"]]
 df["combined"] = (
     "Question: " + df.Question.str.strip() + "; Answer: " + df.Answer.str.strip()
 )
@@ -37,4 +37,4 @@ len(df)
 
 # This may take a few minutes
 df["embedding"] = df.combined.apply(lambda x: get_embedding(x, engine=embedding_model))
-df.to_csv("rtp_0_10000_embedded.csv")
+df.to_csv("rtp_10000_20000_embedded.csv")

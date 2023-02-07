@@ -11,6 +11,7 @@ import pinecone
 import requests
 import pandas as pd
 import numpy as np
+import sys
 
 from openai.embeddings_utils import get_embedding, cosine_similarity
 
@@ -31,6 +32,8 @@ print(pinecone.list_indexes())
 
 index = pinecone.Index("rtp-index")
 
+num_vecs = index.describe_index_stats()['total_vector_count']
+
 
 # Update metadata
 # datafile_path = "real-talk-princeton_10000_19439_id_date_url.csv"
@@ -45,7 +48,7 @@ index = pinecone.Index("rtp-index")
 
 # index.upsert([('vec_0', res, {"question":"q", "answer":"a"})])
 
-datafile_path = "rtp_0_10000_embedded.csv"
+datafile_path = "rtp_10000_20000_embedded.csv"
 df = pd.read_csv(datafile_path)
 df["embedding"] = df.embedding.apply(eval).apply(np.array)
 df["combined"] = df.combined
@@ -69,20 +72,28 @@ df["post_url"] = df.post_url
 
 vecs = []
 count = 0
+
 for i in range(len(df["embedding"])):
-    if count == 100 or i == len(df["embedding"]) - 1:
+    if count == 50 or i == len(df["embedding"]) - 1:
         index.upsert(vecs)
         vecs = []
         count = 0
 
-    name = "vec_" + str(i)
-    vecs.append((name, list(df["embedding"][i]), {"Question":df["Question"][i], "Answer":df["Answer"][i],
+    name = "vec_" + str(num_vecs + i)
+
+    # Avoid Pinecone max metadata limit
+    Answer = df["Answer"][i]
+    if sys.getsizeof(Answer) > 9000:
+       Answer = Answer[0:1500]
+
+    vecs.append((name, list(df["embedding"][i]), {"Question":df["Question"][i], "Answer":Answer,
                                                   "id" : df["id"][i], "timestamp" : df["timestamp"][i],
                                                   "post_url" : df["post_url"][i]}))
     # index.delete(ids=[name])
     
     # vecs.append((name, list(df["embedding"][i]), {"combined":df["combined"][i], "Question":df["Question"][i], "Answer":df["Answer"][i]}))
     count += 1
+
 
 vecs = []
 name = "vec_" + str(len(df["embedding"]) - 1)
