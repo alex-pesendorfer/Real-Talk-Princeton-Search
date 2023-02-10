@@ -15,18 +15,7 @@ import datetime
 
 from openai.embeddings_utils import get_embedding, cosine_similarity
 
-from apscheduler.schedulers.background import BackgroundScheduler
-
-def retrieve_posts():
-    """Function that runs every 60 minutes"""
-    print("Scheduler is alive")
-
 app = Flask(__name__)
-sched = BackgroundScheduler(daemon=True)
-sched.add_job(retrieve_posts, 'interval', seconds=10)
-sched.start()
-
-
 
 # pinecone_index_name = "question-answering-chatbot"
 # DATA_DIR = "tmp"
@@ -108,6 +97,7 @@ def index():
         html = render_template("pinecone_index.html", results = results)
         response = make_response(html)
         return response
+
 
 # @app.route("/", methods=["GET"])
 # @app.route('/index', methods=['GET'])
