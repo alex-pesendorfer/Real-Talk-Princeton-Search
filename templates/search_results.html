@@ -67,7 +67,11 @@
                 <br>
                 <br>
                 <strong>Answer: </strong> <br>
-                <p>{{ match['metadata']['Answer'] }}</p>
+                <p>{{ match['metadata']['Answer'] }}
+                    {% if match['metadata']['Answer']|length  > 1499 %}
+                    <a href= {{ match['metadata']['post_url'] }}> ...See Full Post </a>
+                    {% endif %}
+                </p>
             </div>
         </div>
         <hr>

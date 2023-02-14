@@ -189,8 +189,6 @@ def index():
 
     index = initialize_pinecone()
     stats = index.describe_index_stats()
-    print(stats)
-
 
     query_data = ""
     if request.method == "GET":
