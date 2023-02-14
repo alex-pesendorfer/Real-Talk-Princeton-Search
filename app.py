@@ -188,11 +188,13 @@ def ETDateTime(s):
 def index():
 
     index = initialize_pinecone()
+    stats = index.describe_index_stats()
+    print(stats)
+
 
     query_data = ""
     if request.method == "GET":
         query_data = request.args.get('search')
-        saved_query_data = query_data
         if query_data is None or query_data.strip() == "":
             results = ""
         else:
@@ -203,7 +205,7 @@ def index():
 
             # print(results)
         
-        html = render_template("pinecone_index.html", results = results)
+        html = render_template("pinecone_index.html", results = results, stats = stats)
         response = make_response(html)
         return response
 
