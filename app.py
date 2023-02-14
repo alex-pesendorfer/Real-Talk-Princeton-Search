@@ -12,53 +12,141 @@ import requests
 import pandas as pd
 import numpy as np
 import datetime
+import pytumblr
+import html
+import tiktoken
+import sys
 
 from openai.embeddings_utils import get_embedding, cosine_similarity
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
+from io import StringIO
+from html.parser import HTMLParser
+
+class MLStripper(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.reset()
+        self.strict = False
+        self.convert_charrefs= True
+        self.text = StringIO()
+    def handle_data(self, d):
+        self.text.write(d)
+    def get_data(self):
+        return self.text.getvalue()
+
+def strip_tags(html):
+    s = MLStripper()
+    s.feed(html)
+    return s.get_data()
+
+def get_post(offset):
+
+    client = pytumblr.TumblrRestClient(
+        os.environ.get('TUMBLR_CONSUMER_KEY'),
+        os.environ.get('TUMBLR_CONSUMER_SECRET'),
+        os.environ.get('TUMBLR_TOKEN'),
+        os.environ.get('TUMBLR_TOKEN_SECRET'),
+    )
+    blog = "realtalk-princeton"
+
+    # retrieve newest post
+    response = client.posts(blog, limit=1, offset=offset, reblog_info=True, notes_info=True)
+
+    # Get the 'posts' field of the response        
+    posts = response['posts']
+    if not posts: return
+
+    for post in posts:
+        if "question" in post:
+            question = strip_tags(html.unescape(post["question"]))
+            # print("q", question)
+            answer = strip_tags(html.unescape(post["answer"]))
+            # print("a", answer) 
+        elif "body" in post:
+            question = ""
+            answer = strip_tags(html.unescape(post["body"]))
+        elif "url" in post and "description" in post:
+            question = strip_tags(html.unescape(post["description"]))
+            answer = strip_tags(html.unescape(post["url"]))
+        
+        id = post["id"]
+        timestamp = post["timestamp"]
+        post_url = strip_tags(html.unescape(post["post_url"]))
+
+        
+        return {"id":id, "timestamp":timestamp, "post_url":post_url, "Question":question, "Answer":answer}
+
+def embed_post(post):
+    # embedding model parameters
+    embedding_model = "text-embedding-ada-002"
+    embedding_encoding = "cl100k_base"  # this the encoding for text-embedding-ada-002
+    max_tokens = 8000  # the maximum for text-embedding-ada-002 is 8191
+
+    df = pd.DataFrame(post, index=[0])
+    df["combined"] = (
+        "Question: " + df.Question.str.strip() + "; Answer: " + df.Answer.str.strip()
+    )   
+    df = df.dropna()
+    encoding = tiktoken.get_encoding(embedding_encoding)
+    # omit reviews that are too long to embed
+    df["n_tokens"] = df.combined.apply(lambda x: len(encoding.encode(x)))
+    df = df[df.n_tokens <= max_tokens]
+
+    df["embedding"] = df.combined.apply(lambda x: get_embedding(x, engine=embedding_model))
+    df["embedding"] = df.embedding.apply(np.array)
+    df["combined"] = df.combined
+    df["Question"] = df.Question
+    df["Answer"] = df.Answer
+    df["id"] = df.id.astype(str)
+    df["timestamp"] = df.timestamp.astype(str)
+    df["post_url"] = df.post_url
+
+    return df
+
+
+
 def retrieve_posts():
-    """Function that runs every 60 minutes"""
+
+    """Function that runs every 6 hours"""
     print("Scheduler is alive")
+    
+    offset = 0
 
-app = Flask(__name__)
-sched = BackgroundScheduler(daemon=True)
-sched.add_job(retrieve_posts, 'interval', seconds=10)
-sched.start()
+    while True:
+        post = get_post(offset)
+        print("offset: ", offset)
+        
+        # Check if post is already in pinecone
+        name = 'vec_' + str(post["id"])
+        results = index.fetch([name])
+        
+        # Check if database is up to date
+        if results['vectors']:
+            print(type(results['vectors']))
+            print("reached!")
+            print("The post I'm at: ", post["post_url"])
+            break
+
+            
+        else:
+            # embed and insert new post
+            df_post = embed_post(post)
+            
+            # trim Answer if too long
+            Answer = df_post["Answer"][0]
+            if sys.getsizeof(Answer) > 9000:
+                Answer = Answer[0:1500]
+            
+            index.upsert([(name, list(df_post["embedding"][0]), {"Question":df_post["Question"][0], "Answer":Answer,
+                                                  "id" : df_post["id"][0], "timestamp" : df_post["timestamp"][0],
+                                                  "post_url" : df_post["post_url"][0]})])
+
+        offset += 1
 
 
-
-# pinecone_index_name = "question-answering-chatbot"
-# DATA_DIR = "tmp"
-# DATA_FILE = f"{DATA_DIR}/quora_duplicate_questions.tsv"
-# DATA_URL = "https://qim.fs.quoracdn.net/quora_duplicate_questions.tsv"
-
-# test with amazone fine-food data
-# datafile_path = "amazon-fine-food-reviews/fine_food_reviews_with_embeddings_100.csv"
-datafile_path = "real-talk-princeton_with_embeddings_10000.csv"
-df = pd.read_csv(datafile_path)
-df["embedding"] = df.embedding.apply(eval).apply(np.array)
-
-# search through the reviews for a specific product
-def search_reviews(df, product_description, n=3, pprint=True):
-    product_embedding = get_embedding(
-        product_description,
-        engine="text-embedding-ada-002"
-    )
-    df["similarity"] = df.embedding.apply(lambda x: cosine_similarity(x, product_embedding))
-
-    results = (
-        df.sort_values("similarity", ascending=False)
-        .head(n)
-        .combined.str.replace("Title: ", "")
-        .str.replace("; Content:", ": ")
-    )
-    if pprint:
-        for r in results:
-            print(r[:200])
-            print()
-    return results
-
+    # else: insert into pinecone and add next post with offset = 0
 
 def initialize_pinecone():
     PINECONE_API_KEY = os.environ["PINECONE_API_KEY"]
@@ -84,6 +172,11 @@ def get_results(index, query, n=5):
 
     return results
 
+app = Flask(__name__)
+sched = BackgroundScheduler(daemon=True)
+sched.add_job(retrieve_posts, 'interval', hours=6)
+sched.start()
+
 @app.template_filter('ETDateTime')
 def ETDateTime(s):
     x = datetime.datetime.fromtimestamp(int(s))
@@ -99,46 +192,18 @@ def index():
     query_data = ""
     if request.method == "GET":
         query_data = request.args.get('search')
+        saved_query_data = query_data
         if query_data is None or query_data.strip() == "":
             results = ""
         else:
             results = get_results(index, query_data)
-            print(results)
+            html = render_template("search_results.html", results = results, query_data = query_data)
+            response = make_response(html)
+            return response
+
+            # print(results)
         
         html = render_template("pinecone_index.html", results = results)
         response = make_response(html)
         return response
 
-# @app.route("/", methods=["GET"])
-# @app.route('/index', methods=['GET'])
-# def index():
-
-#     query_data = ""
-#     if request.method == "GET":
-#         query_data = request.args.get('search')
-#         if query_data is None or query_data.strip() == "":
-#             results = ""
-#         else:
-#             # print("query_data", query_data)
-#             results = search_reviews(df, query_data, n=5, pprint=False)
-#             # print(len(results))
-#             # for item in results:
-#             #     print(item)
-#             #     results = item
-#             output = []
-#             for item in results:
-#                 output.append(item)
-#             print(output)
-#             results = output
-#         html = render_template("index.html", results = results)
-#         response = make_response(html)
-#         return response
-    
-
-# @app.route("/api/search", methods=["POST", "GET"])
-# def search():
-#     if request.method == "POST":
-#         return query_pinecone(request.form.question)
-#     if request.method == "GET":
-#         return query_pinecone(request.args.get("question", ""))
-#     return "Only GET and POST methods are allowed for this endpoint"

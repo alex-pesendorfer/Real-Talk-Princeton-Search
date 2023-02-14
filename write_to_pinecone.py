@@ -28,6 +28,8 @@ print(len(res))
 # pinecone.delete_index("rtp-index")
 
 # pinecone.create_index("rtp-index", dimension=len(res))
+
+# ----------------------------------------
 print(pinecone.list_indexes())
 
 index = pinecone.Index("rtp-index")
@@ -79,8 +81,8 @@ for i in range(len(df["embedding"])):
         vecs = []
         count = 0
 
-    name = "vec_" + str(num_vecs + i)
-
+    id = df["id"][i]
+    name = "vec_" + id
     # Avoid Pinecone max metadata limit
     Answer = df["Answer"][i]
     if sys.getsizeof(Answer) > 9000:
@@ -96,7 +98,8 @@ for i in range(len(df["embedding"])):
 
 
 vecs = []
-name = "vec_" + str(len(df["embedding"]) - 1)
+id = df["id"][len(df["embedding"]) - 1]
+name = "vec_" + id
 vecs.append((name, list(df["embedding"][len(df["embedding"]) - 1]), {"Question":df["Question"][len(df["embedding"]) - 1], "Answer":df["Answer"][len(df["embedding"]) - 1],
                                                   "id" : df["id"][len(df["embedding"]) - 1], "timestamp" : df["timestamp"][len(df["embedding"]) - 1],
                                                   "post_url" : df["post_url"][len(df["embedding"]) - 1]}))
