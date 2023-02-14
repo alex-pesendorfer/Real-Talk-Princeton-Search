@@ -60,17 +60,6 @@ df["id"] = df.id.astype(str)
 df["timestamp"] = df.timestamp.astype(str)
 df["post_url"] = df.post_url
 
-# print(df["combined"][9300])
-# print(df["embedding"][9300])
-# print(df["Question"][9300])
-# print(df["Answer"][9300])
-# print(df["id"][9300])
-# print(df["timestamp"][9300])
-# print(df["post_url"][9300])
-
-# print(len(df["embedding"]))
-# print(len(df["id"]))
-
 
 vecs = []
 count = 0

@@ -109,6 +109,8 @@ def embed_post(post):
 
 def retrieve_posts():
 
+    index = initialize_pinecone()
+
     """Function that runs every 6 hours"""
     print("Scheduler is alive")
     
@@ -174,7 +176,7 @@ def get_results(index, query, n=5):
 
 app = Flask(__name__)
 sched = BackgroundScheduler(daemon=True)
-sched.add_job(retrieve_posts, 'interval', hours=6)
+sched.add_job(retrieve_posts, 'interval', hours=2)
 sched.start()
 
 @app.template_filter('ETDateTime')
