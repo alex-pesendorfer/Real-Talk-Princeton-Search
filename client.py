@@ -89,28 +89,31 @@ blog = "realtalk-princeton"
 
 
 # Writes returned posts from get_posts to csv
-with open('rtp_0_10000.csv', 'w', newline='') as file:
+with open('rtp_20000_30000.csv', 'w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow(['Count', 'Id', 'Timestamp', 'Post_url', 'Question', 'Answer'])
-    count = 5900
-    for post in get_posts(client, blog, 0, 10000):
-        print(count)
-        print(post)
-        if "question" in post:
-            question = strip_tags(html.unescape(post["question"]))
-            # print("q", question)
-            answer = strip_tags(html.unescape(post["answer"]))
-            # print("a", answer) 
-        elif "body" in post:
-            question = ""
-            answer = strip_tags(html.unescape(post["body"]))
-        elif "url" in post and "description" in post:
-            question = strip_tags(html.unescape(post["description"]))
-            answer = strip_tags(html.unescape(post["url"]))
-        
-        id = post["id"]
-        timestamp = post["timestamp"]
-        post_url = strip_tags(html.unescape(post["post_url"]))
+    count = 0
+    for post in get_posts(client, blog, 20000, 30000):
+        # print(count)
+        #  print(post)
+        try:
+            if "question" in post:
+                question = strip_tags(html.unescape(post["question"]))
+                # print("q", question)
+                answer = strip_tags(html.unescape(post["answer"]))
+                # print("a", answer) 
+            elif "body" in post:
+                question = ""
+                answer = strip_tags(html.unescape(post["body"]))
+            elif "url" in post and "description" in post:
+                question = strip_tags(html.unescape(post["description"]))
+                answer = strip_tags(html.unescape(post["url"]))
+            
+            id = post["id"]
+            timestamp = post["timestamp"]
+            post_url = strip_tags(html.unescape(post["post_url"]))
 
-        writer.writerow([count, id, timestamp, post_url, question, answer])
+            writer.writerow([count, id, timestamp, post_url, question, answer])
+        except:
+            print("error")
         count += 1

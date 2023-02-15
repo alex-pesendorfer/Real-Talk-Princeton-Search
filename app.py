@@ -118,7 +118,9 @@ def retrieve_posts():
 
     while True:
         post = get_post(offset)
+
         print("offset: ", offset)
+        
         
         # Check if post is already in pinecone
         name = 'vec_' + str(post["id"])
@@ -176,7 +178,7 @@ def get_results(index, query, n=5):
 
 app = Flask(__name__)
 sched = BackgroundScheduler(daemon=True)
-sched.add_job(retrieve_posts, 'interval', hours=2)
+sched.add_job(retrieve_posts, 'interval', hours=1)
 sched.start()
 
 @app.template_filter('ETDateTime')
