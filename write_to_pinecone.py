@@ -28,6 +28,8 @@ print(len(res))
 # pinecone.delete_index("rtp-index")
 
 # pinecone.create_index("rtp-index", dimension=len(res))
+
+# ----------------------------------------
 print(pinecone.list_indexes())
 
 index = pinecone.Index("rtp-index")
@@ -48,26 +50,15 @@ num_vecs = index.describe_index_stats()['total_vector_count']
 
 # index.upsert([('vec_0', res, {"question":"q", "answer":"a"})])
 
-datafile_path = "rtp_10000_20000_embedded.csv"
+datafile_path = "rtp_20000_30000_embedded.csv"
 df = pd.read_csv(datafile_path)
 df["embedding"] = df.embedding.apply(eval).apply(np.array)
 df["combined"] = df.combined
 df["Question"] = df.Question
 df["Answer"] = df.Answer
-df["id"] = df.id.astype(str)
-df["timestamp"] = df.timestamp.astype(str)
-df["post_url"] = df.post_url
-
-# print(df["combined"][9300])
-# print(df["embedding"][9300])
-# print(df["Question"][9300])
-# print(df["Answer"][9300])
-# print(df["id"][9300])
-# print(df["timestamp"][9300])
-# print(df["post_url"][9300])
-
-# print(len(df["embedding"]))
-# print(len(df["id"]))
+df["id"] = df.Id.astype(str)
+df["timestamp"] = df.Timestamp.astype(str)
+df["post_url"] = df.Post_url
 
 
 vecs = []
@@ -79,8 +70,8 @@ for i in range(len(df["embedding"])):
         vecs = []
         count = 0
 
-    name = "vec_" + str(num_vecs + i)
-
+    id = df["id"][i]
+    name = "vec_" + id
     # Avoid Pinecone max metadata limit
     Answer = df["Answer"][i]
     if sys.getsizeof(Answer) > 9000:
@@ -96,7 +87,8 @@ for i in range(len(df["embedding"])):
 
 
 vecs = []
-name = "vec_" + str(len(df["embedding"]) - 1)
+id = df["id"][len(df["embedding"]) - 1]
+name = "vec_" + id
 vecs.append((name, list(df["embedding"][len(df["embedding"]) - 1]), {"Question":df["Question"][len(df["embedding"]) - 1], "Answer":df["Answer"][len(df["embedding"]) - 1],
                                                   "id" : df["id"][len(df["embedding"]) - 1], "timestamp" : df["timestamp"][len(df["embedding"]) - 1],
                                                   "post_url" : df["post_url"][len(df["embedding"]) - 1]}))
