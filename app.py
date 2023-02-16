@@ -210,4 +210,3 @@ def index():
         html = render_template("pinecone_index.html", results = results, stats = stats)
         response = make_response(html)
         return response
-
