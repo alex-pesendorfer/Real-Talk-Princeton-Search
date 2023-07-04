@@ -49,16 +49,27 @@ num_vecs = index.describe_index_stats()['total_vector_count']
 
 
 # index.upsert([('vec_0', res, {"question":"q", "answer":"a"})])
-
-datafile_path = "rtp_20000_30000_embedded.csv"
+datafile_path = "rtp_0_10000_embedded.csv"
+# datafile_path = "rtp_10000_20000_embedded.csv"
+# slightly different conventions for this file
 df = pd.read_csv(datafile_path)
 df["embedding"] = df.embedding.apply(eval).apply(np.array)
 df["combined"] = df.combined
 df["Question"] = df.Question
 df["Answer"] = df.Answer
-df["id"] = df.Id.astype(str)
-df["timestamp"] = df.Timestamp.astype(str)
-df["post_url"] = df.Post_url
+df["id"] = df.id.astype(str)
+df["timestamp"] = df.timestamp.astype(str)
+df["post_url"] = df.post_url
+
+# datafile_path = "rtp_20000_30000_embedded.csv"
+# df = pd.read_csv(datafile_path)
+# df["embedding"] = df.embedding.apply(eval).apply(np.array)
+# df["combined"] = df.combined
+# df["Question"] = df.Question
+# df["Answer"] = df.Answer
+# df["id"] = df.Id.astype(str)
+# df["timestamp"] = df.Timestamp.astype(str)
+# df["post_url"] = df.Post_url
 
 
 vecs = []
