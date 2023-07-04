@@ -7,3 +7,5 @@ venv
 __pycache__
 data
 *.csv
+rtp_*.csv
+real-talk-princeton_*.csv
